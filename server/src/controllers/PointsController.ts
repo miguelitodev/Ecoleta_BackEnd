@@ -28,9 +28,9 @@ class PointsController {
 			uf,
 		};
 
-		const insertedId = await trx("points").insert(point);
+		const insertedIds = await trx("points").insert(point);
 
-		const point_id = insertedId[0];
+		const point_id = insertedIds[0];
 
 		const pointItems = items.map((item_id: number) => {
 			return {
@@ -53,15 +53,23 @@ class PointsController {
 			return response.status(400).json({ message: "Point not found" });
 		}
 		const items = await knex("items")
-			.join("point_items", "items.id", "=", "point_items.item.id")
+			.join("point_items", "items.id", "=", "point_items.item_id")
 			.where("point_items.point_id", id)
-			.select("items.title");
+			.select("title");
 
 		return response.json({ point, items });
 	}
 
 	async index(request: Request, response: Response) {
-		const { city, uf, items } = request.query;
+		const { uf, items, city } = request.query;
+
+		console.log(`
+			Request: ${request.query}
+		
+			City: ${city}
+			UF: ${uf}
+			Items: ${items}
+		`)
 
 		const parsedItems = String(items)
 			.split(",")
@@ -70,8 +78,8 @@ class PointsController {
 		const points = await knex("points")
 			.join("point_items", "points.id", "=", "point_items.point_id")
 			.whereIn("point_items.item_id", parsedItems)
-			.where("city", String(city))
 			.where("uf", String(uf))
+			.where("city", String(city))
 			.distinct()
 			.select("points.*");
 
@@ -80,3 +88,5 @@ class PointsController {
 }
 
 export default PointsController;
+
+
